@@ -326,14 +326,14 @@ def build_table2_md(df_p, df_m):
     df_k10_meals["ttp60"] = (df_k10_meals["Time_to_peak"] >= 60.0) * 100.0
     prop_df = df_k10_meals.groupby("ID")[["dp50", "pk140", "pk180", "ttp60"]].mean()
 
-    def stat_row(label, unit, series, level, med_d=1, mean_d=1):
-        return f"| 　{label} | {unit} | {fmt_med_iqr(series, med_d)} | {fmt_mean_sd(series, mean_d)} | {level} |"
+    def stat_row(label, unit, series, med_d=1, mean_d=1):
+        return f"| 　{label} | {unit} | {fmt_med_iqr(series, med_d)} | {fmt_mean_sd(series, mean_d)} |"
 
     lines = [
         "# Table 2. Overall Glycemic Metrics and Postprandial Glycemic Responses\n",
-        "| Metric | Unit | Median [IQR] | Mean ± SD | Analysis Level |",
-        "| :--- | :---: | :---: | :---: | :---: |",
-        f"| **A. Continuous Glucose Monitoring Metrics (Days 2–14)** | | | | **Person-level (n = {total_p:,})** |",
+        "| Metric | Unit | Median [IQR] | Mean ± SD |",
+        "| :--- | :---: | :---: | :---: |",
+        f"| **A. Continuous Glucose Monitoring Metrics (Days 2–14; Person-level, n = {total_p:,})** | | | |",
     ]
     sec_a = [
         ("Mean sensor glucose", "mg/dL", "Mean_glucose", 1, 1),
@@ -345,9 +345,9 @@ def build_table2_md(df_p, df_m):
         ("Glucose Management Indicator (GMI)", "%", "GMI", 2, 2),
     ]
     for lbl, unit, col, md, mn in sec_a:
-        lines.append(stat_row(lbl, unit, df_p[col], "1 value per participant", md, mn))
+        lines.append(stat_row(lbl, unit, df_p[col], md, mn))
 
-    lines.append(f"| **B. Meal-Level Postprandial Glycemic Responses (PPGR)** | | | | **Meal-level (n = {len(df_m):,} meals)** |")
+    lines.append(f"| **B. Meal-Level Postprandial Glycemic Responses (Meal-level, n = {len(df_m):,} meals)** | | | |")
     sec_b = [
         ("Pre-meal baseline glucose", "mg/dL", "Baseline", 1, 1),
         ("Postprandial peak glucose", "mg/dL", "Peak", 1, 1),
@@ -357,9 +357,9 @@ def build_table2_md(df_p, df_m):
         ("Naive trapezoidal iAUC 0–180 min", "mg/dL·min", "iAUC_naive", 0, 1),
     ]
     for lbl, unit, col, md, mn in sec_b:
-        lines.append(stat_row(lbl, unit, df_m[col], "1 value per meal", md, mn))
+        lines.append(stat_row(lbl, unit, df_m[col], md, mn))
 
-    lines.append(f"| **C. Person-Level Summary Metrics & Meal Category Proportions** | | | | **Person-level (n = {total_p:,}; {total_meals_p:,} meals)** |")
+    lines.append(f"| **C. Person-Level Summary Metrics & Meal Category Proportions (Person-level, n = {total_p:,}; {total_meals_p:,} meals)** | | | |")
     sec_c = [
         ("Participant median iAUC 0–180", "mg/dL·min", df_p["iAUC_median"]),
         ("Intra-individual iAUC 0–180 IQR", "mg/dL·min", df_p["iAUC_IQR"]),
@@ -371,16 +371,7 @@ def build_table2_md(df_p, df_m):
         ("Proportion of meals with Time to peak ≥ 60 min", "%", prop_df["ttp60"]),
     ]
     for lbl, unit, ser in sec_c:
-        lines.append(stat_row(lbl, unit, ser, "1 value per participant", 1, 1))
-
-    lines.append(f"| **D. Time-of-Day / Meal Category Postprandial Metrics** | | | | **Meal-level (n = {len(df_m):,} meals)** |")
-    meal_cats = [("breakfast", "Breakfast"), ("lunch", "Lunch"), ("dinner", "Dinner"), ("snack", "Snack")]
-    for cat_key, cat_label in meal_cats:
-        sub = df_m[df_m["meal_type"] == cat_key]
-        lines.append(f"| 　{cat_label} (n = {len(sub):,} meals, {len(sub) / len(df_m) * 100:.1f}%) | | | | |")
-        lines.append(stat_row("　Postprandial rise (ΔPeak)", "mg/dL", sub["DeltaPeak"], "1 value per meal", 1, 1))
-        lines.append(stat_row("　Time to peak", "min", sub["Time_to_peak"], "1 value per meal", 0, 1))
-        lines.append(stat_row("　Positive iAUC 0–180 min", "mg/dL·min", sub["iAUC"], "1 value per meal", 0, 1))
+        lines.append(stat_row(lbl, unit, ser, 1, 1))
 
     lines.append("\n*Values are median [IQR] and mean ± SD. Positive iAUC was calculated using the trapezoidal rule with linear baseline-crossing interpolation according to FAO/WHO and Wolever guidelines [16,17].*\n")
     return "\n".join(lines)
