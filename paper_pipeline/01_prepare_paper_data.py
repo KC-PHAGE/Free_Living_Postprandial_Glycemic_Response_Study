@@ -156,12 +156,15 @@ def compute_age_group_at_date(dob, ref_date, missing_flag=False):
     return "≥70"
 
 
-def run_pipeline(demographics_path, cgm_path, meals_path, out_dir, encoding="utf-8"):
+def run_pipeline(demographics_path, cgm_path, meals_path, out_dir, encoding="utf-8", end_date=None):
     t_start = time.time()
     os.makedirs(out_dir, exist_ok=True)
+    cutoff_date = date.fromisoformat(end_date) if end_date else None
 
     print("=" * 80)
     print("Free-Living PPGR Data Preprocessing Pipeline")
+    if cutoff_date is not None:
+        print(f"Study cutoff date applied: <= {cutoff_date.isoformat()}")
     print("=" * 80)
 
     demographics = load_demographics(demographics_path, encoding=encoding)
@@ -182,6 +185,8 @@ def run_pipeline(demographics_path, cgm_path, meals_path, out_dir, encoding="utf
             gid = row[id_idx].strip()
             dt = parse_iso(row[time_idx])
             if dt is None:
+                continue
+            if cutoff_date is not None and dt.date() > cutoff_date:
                 continue
             try:
                 gl = int(float(row[gl_idx]))
@@ -300,6 +305,8 @@ def run_pipeline(demographics_path, cgm_path, meals_path, out_dir, encoding="utf
             m_time = parse_iso(row[time_idx])
             if m_time is None:
                 count_invalid_time += 1
+                continue
+            if cutoff_date is not None and m_time.date() > cutoff_date:
                 continue
             if mid in valid_meals_by_id:
                 count_duplicate_records += 1
@@ -568,8 +575,9 @@ def main():
     parser.add_argument("--meals", required=True, help="Path to meal logs CSV")
     parser.add_argument("--out-dir", default="./processed_data", help="Directory for processed outputs")
     parser.add_argument("--encoding", default="utf-8", help="CSV text encoding (e.g., utf-8 or cp932)")
+    parser.add_argument("--end-date", default=None, help="Optional inclusive study end date cutoff (YYYY-MM-DD)")
     args = parser.parse_args()
-    run_pipeline(args.demographics, args.cgm, args.meals, args.out_dir, encoding=args.encoding)
+    run_pipeline(args.demographics, args.cgm, args.meals, args.out_dir, encoding=args.encoding, end_date=args.end_date)
 
 
 if __name__ == "__main__":
