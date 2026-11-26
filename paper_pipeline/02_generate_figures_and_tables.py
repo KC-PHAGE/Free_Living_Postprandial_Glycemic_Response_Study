@@ -11,7 +11,6 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 import seaborn as sns
 from scipy.stats import spearmanr
 
@@ -117,8 +116,12 @@ def create_histogram_figures(
         xticks = list(np.arange(b_min, b_max + tick_step * 0.1, tick_step))
         xticklabels = [f"{t:,.0f}" for t in xticks]
         if has_under:
-            xticks = [b_min - 0.5 * b_width] + xticks
-            xticklabels = [f"<{b_min:,.0f}"] + xticklabels
+            if xticks and abs(xticks[0] - b_min) < 1e-6:
+                xticks[0] = b_min - 0.5 * b_width
+                xticklabels[0] = f"<{b_min:,.0f}"
+            else:
+                xticks = [b_min - 0.5 * b_width] + xticks
+                xticklabels = [f"<{b_min:,.0f}"] + xticklabels
         if has_over:
             if xticks and abs(xticks[-1] - b_max) < 1e-6:
                 xticks[-1] = b_max + 0.5 * b_width
@@ -129,15 +132,10 @@ def create_histogram_figures(
         ax.set_xticks(xticks)
         ax.set_xticklabels(xticklabels)
         ax.set_ylim(bottom=0)
+        ax.grid(False)
 
-        if has_under or has_over:
-            tail_patch = Patch(facecolor=tail_color, edgecolor=stroke_color, hatch="///", alpha=0.88,
-                               label="Pooled tail bin")
-            ax.legend(handles=[tail_patch], loc="center right", fontsize=8, frameon=True,
-                      facecolor="#ffffff", edgecolor="#cbd5e1", framealpha=0.92)
-
-    fig.savefig(filename, format="svg", bbox_inches="tight")
-    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight")
+    fig.savefig(filename, format="svg", bbox_inches="tight", dpi=300)
+    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"  Saved {filename} and .pdf")
 
@@ -176,8 +174,8 @@ def create_scatter_figure(x_vals, y_list, titles, y_labels, y_ranges, filename):
         ax.set_ylim(y_min, y_max)
         ax.set_yticks(np.arange(y_min, y_max + y_step * 0.1, y_step))
 
-    fig.savefig(filename, format="svg", bbox_inches="tight")
-    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight")
+    fig.savefig(filename, format="svg", bbox_inches="tight", dpi=300)
+    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"  Saved {filename} and .pdf")
 
@@ -241,8 +239,8 @@ def create_meal_type_comparison_figure(meal_subsets, filename):
         ax.set_yticks(yticks)
         ax.tick_params(axis="x", labelsize=8.5)
 
-    fig.savefig(filename, format="svg", bbox_inches="tight")
-    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight")
+    fig.savefig(filename, format="svg", bbox_inches="tight", dpi=300)
+    fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"  Saved {filename} and .pdf")
 
@@ -464,7 +462,7 @@ def main():
         data_list=[df_meals["iAUC"], df_meals["DeltaPeak"], df_meals["Time_to_peak"]],
         titles=["Postprandial Incremental AUC", "Postprandial Glucose Rise (ΔPeak)", "Time to Peak Glucose"],
         x_labels=["Positive iAUC 0–180 min (mg/dL·min)", "ΔPeak (mg/dL)", "Time to peak (min)"],
-        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (-10.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
+        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
         filename=os.path.join(args.out_dir, "figure2_meal_level_distributions.svg"),
     )
 
@@ -489,7 +487,7 @@ def main():
         data_list=[df_overlap["iAUC"], df_overlap["DeltaPeak"], df_overlap["Time_to_peak"]],
         titles=["Postprandial Incremental AUC (Overlap Allowed)", "Postprandial Glucose Rise (ΔPeak, Overlap Allowed)", "Time to Peak Glucose (Overlap Allowed)"],
         x_labels=["Positive iAUC 0–180 min (mg/dL·min)", "ΔPeak (mg/dL)", "Time to peak (min)"],
-        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (-10.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
+        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
         filename=os.path.join(args.out_dir, "figure_s1_overlap_allowed_distributions.svg"),
         bar_color="#0891b2", stroke_color="#0e7490", tail_color="#164e63",
     )
