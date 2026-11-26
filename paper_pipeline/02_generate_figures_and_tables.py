@@ -20,17 +20,21 @@ def setup_publication_style():
     plt.rcParams.update({
         "font.family": "sans-serif",
         "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
-        "font.size": 10,
-        "axes.titlesize": 11.5,
+        "font.size": 15,
+        "axes.titlesize": 18.5,
         "axes.titleweight": "bold",
-        "axes.labelsize": 10.5,
-        "xtick.labelsize": 9.5,
-        "ytick.labelsize": 9.5,
+        "axes.labelsize": 17,
+        "xtick.labelsize": 15,
+        "ytick.labelsize": 15,
         "axes.spines.top": False,
         "axes.spines.right": False,
         "axes.edgecolor": "#334155",
-        "axes.linewidth": 0.9,
-        "axes.grid": True,
+        "axes.linewidth": 1.3,
+        "xtick.major.width": 1.2,
+        "ytick.major.width": 1.2,
+        "xtick.major.size": 5.5,
+        "ytick.major.size": 5.5,
+        "axes.grid": False,
         "grid.alpha": 0.25,
         "grid.linestyle": "--",
         "figure.facecolor": "#ffffff",
@@ -46,7 +50,7 @@ def create_histogram_figures(
     tail_color="#1e3a8a",
 ):
     """Create 3-panel relative frequency histograms with pooled overflow/underflow tail bins."""
-    fig, axes = plt.subplots(1, 3, figsize=(15.0, 4.5), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(17.0, 5.6), constrained_layout=True)
 
     for idx, ax in enumerate(axes):
         vals = np.asanyarray(data_list[idx], dtype=float)
@@ -69,43 +73,45 @@ def create_histogram_figures(
 
         ax.bar(
             lefts, pcts, width=b_width, align="edge",
-            color=bar_color, edgecolor=stroke_color, linewidth=0.6, alpha=0.82,
+            color=bar_color, edgecolor=stroke_color, linewidth=0.7, alpha=0.82,
         )
 
+        u_pct = 0.0
+        o_pct = 0.0
         if has_under:
             u_pct = len(under_vals) / len(vals) * 100.0
             ax.bar(
                 b_min - b_width, u_pct, width=b_width, align="edge",
-                color=tail_color, edgecolor=stroke_color, linewidth=0.6, alpha=0.88, hatch="///",
+                color=tail_color, edgecolor=stroke_color, linewidth=0.7, alpha=0.88, hatch="///",
             )
         if has_over:
             o_pct = len(over_vals) / len(vals) * 100.0
             ax.bar(
                 b_max, o_pct, width=b_width, align="edge",
-                color=tail_color, edgecolor=stroke_color, linewidth=0.6, alpha=0.88, hatch="///",
+                color=tail_color, edgecolor=stroke_color, linewidth=0.7, alpha=0.88, hatch="///",
             )
 
         q25, med, q75 = np.percentile(vals, [25.0, 50.0, 75.0])
         ax.axvspan(q25, q75, color="#f59e0b", alpha=0.14)
-        ax.axvline(med, color="#dc2626", linestyle="--", linewidth=1.8)
+        ax.axvline(med, color="#dc2626", linestyle="--", linewidth=2.4)
 
         tail_notes = []
         if has_under:
-            tail_notes.append(f"<{b_min:,.0f}: {len(under_vals) / len(vals) * 100:.1f}%")
+            tail_notes.append(f"<{b_min:,.0f}: {u_pct:.1f}%")
         if has_over:
-            tail_notes.append(f"≥{b_max:,.0f}: {len(over_vals) / len(vals) * 100:.1f}%")
+            tail_notes.append(f"≥{b_max:,.0f}: {o_pct:.1f}%")
         stat_text = f"Median: {med:,.1f}\nIQR: {q25:,.1f}–{q75:,.1f}\n(n = {len(vals):,})"
         if tail_notes:
             stat_text += "\n" + " | ".join(tail_notes)
         ax.text(
-            0.97, 0.95, stat_text, transform=ax.transAxes,
-            ha="right", va="top", fontsize=8.5, color="#1e293b",
-            bbox=dict(boxstyle="round,pad=0.4", facecolor="#f8fafc", edgecolor="#cbd5e1", alpha=0.92),
+            0.97, 0.96, stat_text, transform=ax.transAxes,
+            ha="right", va="top", fontsize=14, color="#1e293b",
+            bbox=dict(boxstyle="round,pad=0.35", facecolor="#f8fafc", edgecolor="#cbd5e1", alpha=0.92),
         )
 
-        ax.text(-0.12, 1.06, panel_labels[idx], transform=ax.transAxes,
-                fontsize=14, fontweight="bold", color="#0f172a", va="bottom")
-        ax.set_title(titles[idx], pad=12)
+        ax.text(-0.12, 1.05, panel_labels[idx], transform=ax.transAxes,
+                fontsize=22, fontweight="bold", color="#0f172a", va="bottom")
+        ax.set_title(titles[idx], pad=14)
         ax.set_xlabel(x_labels[idx])
         ax.set_ylabel("Percentage (%)" if idx == 0 else "")
 
@@ -123,15 +129,17 @@ def create_histogram_figures(
                 xticks = [b_min - 0.5 * b_width] + xticks
                 xticklabels = [f"<{b_min:,.0f}"] + xticklabels
         if has_over:
-            if xticks and abs(xticks[-1] - b_max) < 1e-6:
-                xticks[-1] = b_max + 0.5 * b_width
+            over_center = b_max + 0.5 * b_width
+            if xticks and (abs(xticks[-1] - b_max) < 1e-6 or abs(over_center - xticks[-1]) < 0.75 * tick_step):
+                xticks[-1] = over_center
                 xticklabels[-1] = f"≥{b_max:,.0f}"
             else:
-                xticks.append(b_max + 0.5 * b_width)
+                xticks.append(over_center)
                 xticklabels.append(f"≥{b_max:,.0f}")
         ax.set_xticks(xticks)
         ax.set_xticklabels(xticklabels)
-        ax.set_ylim(bottom=0)
+        max_bar_pct = max(float(np.max(pcts)) if len(pcts) else 0.0, u_pct, o_pct)
+        ax.set_ylim(0, max_bar_pct * 1.18)
         ax.grid(False)
 
     fig.savefig(filename, format="svg", bbox_inches="tight", dpi=300)
@@ -142,7 +150,7 @@ def create_histogram_figures(
 
 def create_scatter_figure(x_vals, y_list, titles, y_labels, y_ranges, filename):
     """Create 3-panel full-range scatter plots with Spearman rank correlations (Figure 4)."""
-    fig, axes = plt.subplots(1, 3, figsize=(15.0, 4.6), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(17.0, 5.6), constrained_layout=True)
     x_arr = np.asanyarray(x_vals, dtype=float)
     panel_labels = ["A", "B", "C"]
 
@@ -153,20 +161,21 @@ def create_scatter_figure(x_vals, y_list, titles, y_labels, y_ranges, filename):
         assert np.all((x_arr >= 60.0) & (x_arr <= 260.0)), "x values exceed Figure 4 limits"
         assert np.all((y_arr >= y_min) & (y_arr <= y_max)), f"y values exceed Figure 4 panel {idx} limits"
 
+        ax.grid(True, alpha=0.25, linestyle="--")
         ax.scatter(x_arr, y_arr, s=12, color="#2563eb", alpha=0.25, edgecolors="none", rasterized=True)
 
         rho, p_val = spearmanr(x_arr, y_arr)
         p_str = "p < 0.001" if p_val < 0.001 else f"p = {p_val:.3f}"
         ax.text(
-            0.04, 0.95, f"Spearman ρ = {rho:.3f}\n({p_str}, n = {len(x_arr):,})",
-            transform=ax.transAxes, ha="left", va="top", fontsize=9.5, fontweight="bold",
+            0.04, 0.96, f"Spearman ρ = {rho:.3f}\n({p_str}, n = {len(x_arr):,})",
+            transform=ax.transAxes, ha="left", va="top", fontsize=15, fontweight="bold",
             color="#0f172a",
-            bbox=dict(boxstyle="round,pad=0.4", facecolor="#ffffff", edgecolor="#cbd5e1", alpha=0.92),
+            bbox=dict(boxstyle="round,pad=0.35", facecolor="#ffffff", edgecolor="#cbd5e1", alpha=0.92),
         )
 
-        ax.text(-0.12, 1.06, panel_labels[idx], transform=ax.transAxes,
-                fontsize=14, fontweight="bold", color="#0f172a", va="bottom")
-        ax.set_title(titles[idx], pad=12)
+        ax.text(-0.12, 1.05, panel_labels[idx], transform=ax.transAxes,
+                fontsize=22, fontweight="bold", color="#0f172a", va="bottom")
+        ax.set_title(titles[idx], pad=14)
         ax.set_xlabel("Mean Sensor Glucose (mg/dL)")
         ax.set_ylabel(y_labels[idx])
         ax.set_xlim(60, 260)
@@ -204,7 +213,7 @@ def create_meal_type_comparison_figure(meal_subsets, filename):
         ("Time_to_peak", "C", "Time to Peak Glucose", "Time to Peak (min)", (-8, 190), np.arange(0, 181, 30)),
     ]
 
-    fig, axes = plt.subplots(1, 3, figsize=(15.5, 5.0), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(17.5, 6.0), constrained_layout=True)
 
     for idx, (col, p_lbl, title, y_lbl, ylim, yticks) in enumerate(metrics):
         ax = axes[idx]
@@ -214,9 +223,9 @@ def create_meal_type_comparison_figure(meal_subsets, filename):
             data=df_meals, x="Meal", y=col, hue="Meal", order=x_order,
             palette=palette, legend=False, width=0.55, showfliers=True,
             flierprops={"marker": "o", "markersize": 2.0, "alpha": 0.22, "markeredgewidth": 0, "markerfacecolor": "#64748b"},
-            boxprops={"alpha": 0.80, "linewidth": 1.1},
-            medianprops={"color": "#0f172a", "linewidth": 2.0},
-            whiskerprops={"linewidth": 1.1}, capprops={"linewidth": 1.1},
+            boxprops={"alpha": 0.80, "linewidth": 1.2},
+            medianprops={"color": "#0f172a", "linewidth": 2.2},
+            whiskerprops={"linewidth": 1.2}, capprops={"linewidth": 1.2},
             ax=ax,
         )
 
@@ -226,18 +235,20 @@ def create_meal_type_comparison_figure(meal_subsets, filename):
             fmt = f"{med_v:,.0f}" if col != "DeltaPeak" else f"{med_v:.1f}"
             ax.text(
                 x_i, med_v + (ylim[1] - ylim[0]) * 0.025, fmt,
-                ha="center", va="bottom", fontsize=8.0, fontweight="bold", color="#0f172a",
-                bbox=dict(boxstyle="round,pad=0.15", facecolor="#ffffff", edgecolor="none", alpha=0.82),
+                ha="center", va="bottom", fontsize=13.5, fontweight="bold", color="#0f172a",
+                bbox=dict(boxstyle="round,pad=0.15", facecolor="#ffffff", edgecolor="none", alpha=0.84),
             )
 
-        ax.text(-0.12, 1.06, p_lbl, transform=ax.transAxes,
-                fontsize=14, fontweight="bold", color="#0f172a", va="bottom")
-        ax.set_title(title, pad=12)
+        ax.text(-0.12, 1.05, p_lbl, transform=ax.transAxes,
+                fontsize=22, fontweight="bold", color="#0f172a", va="bottom")
+        ax.set_title(title, pad=14, fontsize=18.5, fontweight="bold")
         ax.set_xlabel("")
-        ax.set_ylabel(y_lbl)
+        ax.set_ylabel(y_lbl, fontsize=17)
         ax.set_ylim(ylim)
         ax.set_yticks(yticks)
-        ax.tick_params(axis="x", labelsize=8.5)
+        ax.tick_params(axis="y", labelsize=15)
+        ax.tick_params(axis="x", labelsize=14.5)
+        ax.grid(False)
 
     fig.savefig(filename, format="svg", bbox_inches="tight", dpi=300)
     fig.savefig(os.path.splitext(filename)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
@@ -453,7 +464,7 @@ def main():
         data_list=[df_meals["iAUC"], df_meals["DeltaPeak"], df_meals["Time_to_peak"]],
         titles=["Postprandial Incremental AUC", "Postprandial Glucose Rise (ΔPeak)", "Time to Peak Glucose"],
         x_labels=["Positive iAUC 0–180 min (mg/dL·min)", "ΔPeak (mg/dL)", "Time to peak (min)"],
-        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
+        bin_configs=[(0.0, 12000.0, 500.0, 3000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
         filename=os.path.join(args.out_dir, "figure2_meal_level_distributions.svg"),
     )
 
@@ -476,9 +487,9 @@ def main():
 
     create_histogram_figures(
         data_list=[df_overlap["iAUC"], df_overlap["DeltaPeak"], df_overlap["Time_to_peak"]],
-        titles=["Postprandial Incremental AUC (Overlap Allowed)", "Postprandial Glucose Rise (ΔPeak, Overlap Allowed)", "Time to Peak Glucose (Overlap Allowed)"],
+        titles=["Postprandial Incremental AUC (Overlap)", "Postprandial Rise (ΔPeak, Overlap)", "Time to Peak Glucose (Overlap)"],
         x_labels=["Positive iAUC 0–180 min (mg/dL·min)", "ΔPeak (mg/dL)", "Time to peak (min)"],
-        bin_configs=[(0.0, 12000.0, 500.0, 2000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
+        bin_configs=[(0.0, 12000.0, 500.0, 3000.0), (0.0, 110.0, 5.0, 20.0), (0.0, 180.0, 10.0, 30.0)],
         filename=os.path.join(args.out_dir, "figure_s1_overlap_allowed_distributions.svg"),
         bar_color="#0891b2", stroke_color="#0e7490", tail_color="#164e63",
     )

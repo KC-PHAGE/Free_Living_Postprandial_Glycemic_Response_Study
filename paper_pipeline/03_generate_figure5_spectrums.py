@@ -17,16 +17,20 @@ def setup_publication_style():
     plt.rcParams.update({
         "font.family": "sans-serif",
         "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
-        "font.size": 10,
-        "axes.titlesize": 11.5,
+        "font.size": 15,
+        "axes.titlesize": 18.5,
         "axes.titleweight": "bold",
-        "axes.labelsize": 10.5,
-        "xtick.labelsize": 9.5,
-        "ytick.labelsize": 9.5,
+        "axes.labelsize": 16.5,
+        "xtick.labelsize": 14.5,
+        "ytick.labelsize": 14.5,
         "axes.spines.top": False,
         "axes.spines.right": False,
         "axes.edgecolor": "#334155",
-        "axes.linewidth": 0.9,
+        "axes.linewidth": 1.3,
+        "xtick.major.width": 1.2,
+        "ytick.major.width": 1.2,
+        "xtick.major.size": 5.5,
+        "ytick.major.size": 5.5,
         "figure.facecolor": "#ffffff",
         "axes.facecolor": "#ffffff",
         "svg.fonttype": "none",
@@ -124,58 +128,64 @@ def plot_spectrum_on_axis(ax1, df_sum, cfg, is_panel=False):
     )
     ax1.set_xlim(0, total_n - 1)
     ax1.set_ylim(0, 100)
-    ax1.set_ylabel("Proportion of Meals (%)")
+    ax1.set_ylabel("Proportion of Meals (%)", fontsize=16.5)
     if not is_panel:
-        ax1.set_xlabel(f"Participants Ranked by Upper-Category Burden (1 to {total_n:,})")
+        ax1.set_xlabel(f"Participants Ranked by Upper-Category Burden (1 to {total_n:,})", fontsize=16.5)
     else:
-        ax1.set_xlabel(f"Participants (n = {total_n:,})")
+        ax1.set_xlabel(f"Participants (n = {total_n:,})", fontsize=16.5)
+    ax1.tick_params(axis="both", labelsize=14.5)
+    ax1.grid(False)
 
     ax2 = ax1.twinx()
     ax2.spines["top"].set_visible(False)
     roll_med = df_sum["trend"].rolling(window=61, center=True, min_periods=1).median()
     print(f"  [{cfg['panel']}] {cfg['metric']} rolling median range: {roll_med.min():.2f} to {roll_med.max():.2f}")
-    ax2.plot(x, roll_med, color="#0f172a", linewidth=2.0, label="Median Trend (61-person rolling)")
+    ax2.plot(x, roll_med, color="#0f172a", linewidth=2.6, label="Median Trend (61-person rolling)")
     ax2.set_ylim(cfg["ylim"])
     ax2.set_yticks(cfg["yticks"])
-    ax2.set_ylabel(cfg["y_trend_label"] if not is_panel else cfg["y_trend_short"], color="#0f172a", fontweight="bold")
+    ax2.set_ylabel(cfg["y_trend_label"] if not is_panel else cfg["y_trend_short"], color="#0f172a", fontweight="bold", fontsize=16.5)
+    ax2.tick_params(axis="y", labelsize=14.5)
+    ax2.grid(False)
 
     handles1, labels1 = ax1.get_legend_handles_labels()
     handles2, labels2 = ax2.get_legend_handles_labels()
     if is_panel:
         ax1.legend(
             handles1 + handles2, labels1 + labels2,
-            loc="upper left", fontsize=7.5, frameon=True, facecolor="#ffffff", framealpha=0.88,
+            loc="upper left", fontsize=13.5, frameon=True,
+            facecolor="#ffffff", framealpha=0.92, edgecolor="#cbd5e1",
+            handlelength=1.5, labelspacing=0.3, borderpad=0.35,
         )
-        ax1.set_title(cfg["panel_title"], loc="left", pad=8)
+        ax1.set_title(cfg["panel_title"], loc="left", pad=10, fontsize=18.5, fontweight="bold")
     else:
         ax1.legend(
             handles1 + handles2, labels1 + labels2,
-            loc="upper center", bbox_to_anchor=(0.5, 1.13),
-            ncol=5, frameon=False, fontsize=9,
+            loc="upper center", bbox_to_anchor=(0.5, 1.15),
+            ncol=3, frameon=False, fontsize=13.5,
         )
 
 
 def generate_individual_spectrum(df_meals, cfg, out_dir):
     df_sum = summarize_metric_spectrum(df_meals, cfg)
-    fig, ax = plt.subplots(figsize=(13.5, 5.0), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(15.5, 5.8), constrained_layout=True)
     plot_spectrum_on_axis(ax, df_sum, cfg, is_panel=False)
 
     out_path = os.path.join(out_dir, cfg["svg_filename"])
-    fig.savefig(out_path, format="svg", bbox_inches="tight")
-    fig.savefig(os.path.splitext(out_path)[0] + ".pdf", format="pdf", bbox_inches="tight")
+    fig.savefig(out_path, format="svg", bbox_inches="tight", dpi=300)
+    fig.savefig(os.path.splitext(out_path)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"  Saved {out_path} and .pdf")
 
 
 def generate_combined_panel(df_meals, configs, out_dir):
-    fig, axes = plt.subplots(2, 2, figsize=(15.5, 9.5), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(17.5, 11.8), constrained_layout=True)
     for ax, cfg in zip(axes.flat, configs):
         df_sum = summarize_metric_spectrum(df_meals, cfg)
         plot_spectrum_on_axis(ax, df_sum, cfg, is_panel=True)
 
     out_path = os.path.join(out_dir, "figure5_four_metrics_spectrum_panel.svg")
-    fig.savefig(out_path, format="svg", bbox_inches="tight")
-    fig.savefig(os.path.splitext(out_path)[0] + ".pdf", format="pdf", bbox_inches="tight")
+    fig.savefig(out_path, format="svg", bbox_inches="tight", dpi=300)
+    fig.savefig(os.path.splitext(out_path)[0] + ".pdf", format="pdf", bbox_inches="tight", dpi=300)
     plt.close(fig)
     print(f"  Saved {out_path} and .pdf")
 
