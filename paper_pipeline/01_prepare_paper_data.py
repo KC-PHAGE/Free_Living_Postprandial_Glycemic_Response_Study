@@ -139,7 +139,7 @@ def compute_age_group_at_date(dob, ref_date, missing_flag=False):
     if missing_flag or dob is None or ref_date is None:
         return "Missing"
     age = ref_date.year - dob.year - ((ref_date.month, ref_date.day) < (dob.month, dob.day))
-    if age < 10:
+    if age < 18:
         return "Missing"
     if age < 20:
         return "18–19"
