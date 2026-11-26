@@ -58,6 +58,7 @@ python -m paper_pipeline.01_prepare_paper_data \
   --demographics path/to/demographics.csv \
   --cgm path/to/glucose_records.csv \
   --meals path/to/meals.csv \
+  --end-date 2026-03-31 \
   --out-dir ./processed_data
 
 # 2. Generate Tables 1, 2, S1, S2 and Figures 2, 3, 4, S1, S2
@@ -71,4 +72,4 @@ python -m paper_pipeline.03_generate_figure5_spectrums \
   --out-dir ./outputs
 ```
 
-Pass `--encoding cp932` to `01_prepare_paper_data` if reading Shift-JIS/CP932 encoded CSV files.
+Pass `--encoding cp932` to `01_prepare_paper_data` if reading Shift-JIS/CP932 encoded CSV files, and `--end-date YYYY-MM-DD` to restrict records to the protocol end date.
